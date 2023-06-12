@@ -11,32 +11,30 @@ const schema = new dynamoose.Schema({
 const people = dynamoose.model('people', schema);
 
 export const handler = async(event) => {
-  const res = {statusCode: null, body: null};
-
-  try {
-    let results = await people.scan().exec();
-    console.log('results', results);
-
-    res.body = JSON.stringify(results);
-    res.statusCode = 200;
-    
-  }catch (e){
-    res.body = JSON.stringify(e || e.message);
-    res.statusCode = 500;
-  }
-
-
   const response = {
-    statusCode: 200,
-    body: JSON.stringify('Hello from Lambda!'),
+    statusCode: null,
+    body: null,
   };
 
+  try {
+    let results;
+
+    if (event.resource === '/people/{id}'){
+      let paramId = event.pathParameters.id;
+      results = await people.get(paramId);
+      response.body = JSON.stringify(results);
+    } else {
+      results = await people.scan().exec();
+      response.body = results;
+    }
 
 
-  // // original response
-  // const response = {
-  //   statusCode: 200,
-  //   body: JSON.stringify('Hello from Lambda!'),
-  // };
+    response.statusCode = 200;
+
+  }catch (e){
+    response.body = JSON.stringify(e.message);
+    response.statusCode = 500;
+  }
+
   return response;
 };
